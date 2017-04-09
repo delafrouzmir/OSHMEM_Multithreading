@@ -7,7 +7,7 @@
 #include <shmem.h>
 
 
-void helloWorld (int x, int thNum, int peNum, char *nodeName)
+void helloWorld (int x, int peNum, char *nodeName, int thNum)
 {
 	int i;
 	for (i=0; i<x; ++i)
@@ -33,7 +33,7 @@ void shmem_thread_init( void(*f)(int,int,int,char *), int x, int numThreads, int
 		else
 		{
 			//printf("from thread %d :\n", tid );
-			f(3, tid, peNum, nodeName);
+			f(args, tid);
 		}
 	}
 	
@@ -52,7 +52,7 @@ int main(int argc, char const *argv[])
     npes = shmem_n_pes ();
 
 	void (*funcPtr)(int,int,int,char*) = &helloWorld;
-	shmem_thread_init(funcPtr, 3, 4, me, u.nodename);
+	shmem_thread_init(funcPtr, 3, me, u.nodename, 4);
 
 	shmem_finalize ();
 
