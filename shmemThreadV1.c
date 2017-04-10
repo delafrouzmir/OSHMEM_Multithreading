@@ -6,9 +6,23 @@
 #include <sys/utsname.h>
 #include <shmem.h>
 
+#include <shmem_threads.h>
 
-void helloWorld (int x, int peNum, char *nodeName, int thNum)
+
+typedef struct {
+    int iter;
+    int peNum;
+    char *nodeName;
+} myfunc_params;
+
+void helloWorld (void *args, /*int x, int peNum, char *nodeName,*/ int thNum)
 {
+	//getting the parameters to this function
+	myfunc_params *params = (myfunc_params *)args;
+	int x = params->iter;
+	int peNum = params->peNum;
+	char *nodeName = params->nodeName;
+	
 	int i;
 	for (i=0; i<x; ++i)
 	{
@@ -16,28 +30,6 @@ void helloWorld (int x, int peNum, char *nodeName, int thNum)
 	}
 }
 
-void shmem_thread_init( void(*f)(void*), void *args, int numThreads, int peNum )
-{
-	int nthreads, tid;
-
-	#pragma omp parallel private(nthreads, tid) num_threads(numThreads+1)
-	{
-		tid = omp_get_thread_num();
-		nthreads = omp_get_num_threads();
-		
-		if ( tid == nthreads -1 )
-		{
-			printf("polling for exit in PE %d node %s \n", peNum, nodeName);
-			// gonna wait for multi-threading finish alert here
-		}
-		else
-		{
-			//printf("from thread %d :\n", tid );
-			f(args, tid);
-		}
-	}
-	
-}
 
 int main(int argc, char const *argv[])
 {
@@ -46,14 +38,22 @@ int main(int argc, char const *argv[])
 
     uname (&u);
 
+    // starting OpenSHMEM
     shmem_init ();
 
-    me = shmem_my_pe ();
+    // getting the number of PEs and the current PE's number
     npes = shmem_n_pes ();
+    me = shmem_my_pe ();
+    
+    // creating a pointer to the function helloWorld, to pass to shmem_thread_init
+	void (*funcPtr)(void*) = &helloWorld;
+	// creating a struct of helloWorld's arguments
+	myfunc_params f_args = {3, me, u.nodename};
 
-	void (*funcPtr)(int,int,int,char*) = &helloWorld;
-	shmem_thread_init(funcPtr, 3, me, u.nodename, 4);
+	// starting multi-threading mode with 5+1 threads, where 4 threads call funcPtr(f_args)
+	shmem_thread_init(funcPtr, &f_args, 4);
 
+	// finalizing OpenSHMEM
 	shmem_finalize ();
 
 	return 0;
