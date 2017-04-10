@@ -6,7 +6,7 @@
 #include <sys/utsname.h>
 #include <shmem.h>
 
-#include <shmem_threads.h>
+#include "shmem_threads.h"
 
 
 typedef struct {
