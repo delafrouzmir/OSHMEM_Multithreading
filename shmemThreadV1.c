@@ -16,7 +16,7 @@ void helloWorld (int x, int peNum, char *nodeName, int thNum)
 	}
 }
 
-void shmem_thread_init( void(*f)(int,int,int,char *), int x, int numThreads, int peNum, char *nodeName )
+void shmem_thread_init( void(*f)(void*), void *args, int numThreads, int peNum )
 {
 	int nthreads, tid;
 
